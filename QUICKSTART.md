@@ -1,12 +1,14 @@
 # GPU Unlock: quick start
 
-This guide is for a Linux machine you control. The RTX 4070 Ti SUPER path is
-experimental and has been tested on **one** `10de:2705` card. RTX 4090
-`10de:2684` has a separate [single-card report](rtx4090-register-report.md).
-Other Ada IDs are not enabled. The measured instruction-rate gain is for
-FP16, BF16 and TF32 tensor work with FP32 accumulation. INT8 and unsigned
-INT4 did not speed up in the 2705 tests. One matched FP8/FP32 GEMM was
-effectively unchanged (59.326 → 59.495 TF/s).
+This guide is for a Linux machine you control. RTX 4090 `10de:2684` has a
+separate [single-card report](rtx4090-register-report.md). Every other Ada ID in
+the README's [experimental target table](README.md#experimental-ada-targets) is
+experimental, was tested on one or a few cards, and needs its own opt-in flag.
+Other Ada IDs remain disabled. The measured instruction-rate gain is for
+FP16, BF16, TF32 and FP8 tensor work with FP32 accumulation. INT8 and unsigned
+INT4 did not speed up in the 2705 tests. One matched FP8/FP32 GEMM on the 2705
+was effectively unchanged (59.326 → 59.495 TF/s), but it ran far below the FP8
+peak; the README lists the FP8 issue-rate results.
 
 ## 1. Find your GPU's PCI address
 
@@ -15,9 +17,9 @@ lspci -Dnn | grep -i nvidia
 ```
 
 Find the line for your GPU. The full address is the first field, such as
-`0000:01:00.0`. Confirm the device ID is `10de:2705` for the experimental
-RTX 4070 Ti SUPER path or `10de:2684` for the RTX 4090 path. Keep this address
-for step 3. On a multi-GPU host, identify the exact intended card; do not use
+`0000:01:00.0`. Confirm the device ID is `10de:2684` for the RTX 4090 path or
+appears in the [experimental target table](README.md#experimental-ada-targets).
+Keep this address for step 3. On a multi-GPU host, identify the exact intended card; do not use
 `targets=all` for an Ada test.
 
 ## 2. Install from open source
@@ -49,11 +51,12 @@ for each eligible GPU it finds:
 python3 tools/print_boot_option.py
 ```
 
-Choose **one** printed line for the first cold test. The examples below show
-the format if you prefer to enter it manually.
-
-For an RTX 4070 Ti SUPER `10de:2705`, append these **two** options to your
-kernel command line, replacing the sample address with yours:
+Choose **one** printed line for the first cold test. Cards that each passed
+alone can later be listed together, comma-separated. To enter it manually,
+use the card's opt-in flag from the
+[experimental target table](README.md#experimental-ada-targets). For an
+RTX 4070 Ti SUPER `10de:2705`, append these **two** options to your kernel
+command line, replacing the sample address with yours:
 
 ```text
 gpu_unlock.targets=0000:01:00.0 gpu_unlock.ad103_experimental=1
@@ -96,7 +99,7 @@ before doing this.
 After the stock NVIDIA driver loads, run:
 
 ```sh
-journalctl -k -b --no-pager | grep -E 'gpu_unlock: unlocked|gpu_unlock: unlock failed|post-FLR SEC2'
+journalctl -k -b --no-pager | grep -E 'gpu_unlock: unlocked|gpu_unlock: already unlocked|gpu_unlock: unlock failed|post-FLR SEC2'
 nvidia-smi
 ```
 
@@ -112,6 +115,12 @@ python3 tools/read_sm_rates.py --expect-uuid GPU-PASTE-YOUR-EXACT-UUID
 
 Get the UUID from `nvidia-smi --query-gpu=uuid --format=csv,noheader` after
 boot. Do not use a UUID from another card.
+
+For a stock/unlocked comparison, collect the stock measurements before enabling
+the test and use the same running kernel, driver, binaries and power cap in both
+states. Check `uname -r` and `/proc/cmdline`; a boot-menu title alone does not
+identify the kernel or prove that the test entry ran. The [testing guide](docs/testing.md)
+includes benchmark commands and the [matched RTX 4090 results](docs/evidence/rtx4090-pr1-matched/README.md).
 
 ## Keep it enabled across boots
 

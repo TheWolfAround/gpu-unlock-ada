@@ -1,6 +1,8 @@
 /workbook/
 /scratchpad/
 /build/
+# Local application benchmarks and owner-specific results.
+/bench/
 **/__pycache__/
 *.pyc
 *.ko
@@ -24,3 +26,13 @@
 /debian/gpu-unlock-*/
 modules.order
 Module.symvers
+
+# Latence.app AD104 Windows port: private inputs and build outputs
+/windows/ad104-msi/build/
+/windows/ad104-msi/local/
+/windows/ad104-msi/diagnostic/build/
+*.EFI
+*.efi
+*.exe
+*.obj
+*.a
